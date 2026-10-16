@@ -468,7 +468,7 @@ function renderMore() {
     <div class="page-head"><h1>Más</h1></div>
 
     <div class="section-head"><h2>Google Sheets y Drive</h2></div>
-    <p class="prose">El texto se guarda en tu hoja de cálculo y las fotos y grabaciones en tu carpeta de Drive. Los pasos para configurarlo están en el README.</p>
+    <p class="prose">El texto se guarda en tu hoja de cálculo y las fotos y grabaciones en tu carpeta de Drive. Escribe tu clave (la propiedad TOKEN del script) para conectar este dispositivo.</p>
     <form id="sync-form" class="settings" autocomplete="off">
       <label class="field">URL de la aplicación web
         <input name="url" type="url" required placeholder="https://script.google.com/macros/s/…/exec" value="${esc(cfg.url || '')}">
@@ -502,7 +502,7 @@ function renderMore() {
     if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(url)) return toast('La URL debe ser la de tu script de Google (…/exec)');
     setConfig({ url, token, lastError: '' });
     // Primera vez: hay que subir todo lo que ya existe.
-    if (!cfg.url) {
+    if (!cfg.token) {
       items.forEach((i) => (i.dirty = true));
       notebooks.forEach((n) => (n.dirty = true));
     }
@@ -799,7 +799,7 @@ async function runAction(action, id) {
     }
     case 'sync-off':
       if (!confirm('¿Dejar de sincronizar este dispositivo? Tus datos en Google no se borran.')) return;
-      setConfig({ url: '', token: '', lastSync: 0, lastError: '' });
+      setConfig({ token: '', lastSync: 0, lastError: '' });
       renderMore();
       break;
     case 'export':

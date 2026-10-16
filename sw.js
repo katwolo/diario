@@ -1,5 +1,5 @@
 // Red primero, caché como respaldo: la app funciona sin conexión.
-const CACHE = 'diario-v2';
+const CACHE = 'diario-v3';
 const ASSETS = ['./', 'index.html', 'styles.css', 'app.js', 'db.js', 'sync.js', 'ocr.js', 'manifest.webmanifest', 'icon.svg'];
 
 self.addEventListener('install', (e) => {

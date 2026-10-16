@@ -9,7 +9,14 @@ function writeJson(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* sin almacenamiento */ }
 }
 
-export const getConfig = () => readJson(CFG_KEY, {});
+// URL de la aplicación web de Apps Script (Codigo.gs). La clave no va aquí: se escribe en la app.
+export const DEFAULT_URL =
+  'https://script.google.com/macros/s/AKfycbyLtp8_X_a7VLe6yHjVeOZXZ5JeKuhz6oF8CXTBW9o-lEYvxOShypjobtiszYtxYllA/exec';
+
+export const getConfig = () => {
+  const c = readJson(CFG_KEY, {});
+  return { ...c, url: c.url || DEFAULT_URL };
+};
 export const setConfig = (patch) => writeJson(CFG_KEY, { ...getConfig(), ...patch });
 export const isConfigured = () => {
   const c = getConfig();

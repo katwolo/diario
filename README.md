@@ -31,8 +31,9 @@ Si conectas Google, se sincroniza solo unos segundos después de cada cambio.
 6. **Implementar > Nueva implementación > Aplicación web**:
    - Ejecutar como: **Yo**
    - Quién tiene acceso: **Cualquier usuario**
-7. Copia la URL que termina en `/exec`.
-8. En la app: **Más > Google Sheets y Drive**, pega la URL y la clave, y pulsa
+7. La URL que termina en `/exec` ya está puesta en la app (`DEFAULT_URL` en `sync.js`).
+   Si algún día creas una implementación nueva con otra URL, cámbiala ahí.
+8. En la app: **Más > Google Sheets y Drive**, escribe la clave y pulsa
    *Guardar y sincronizar*. Hazlo en cada móvil u ordenador que uses.
 
 Si cambias `Codigo.gs` más adelante, pega la versión nueva (la clave sigue guardada en
