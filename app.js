@@ -374,7 +374,7 @@ function renderHome() {
   const recent = sorted(items).slice(0, 4);
   app.innerHTML = `
     <header class="top"><div class="avatar" aria-hidden="true">D</div></header>
-    <section class="hero"><h1>Mi Diario</h1><p class="date">${fmtLong(new Date())}</p></section>
+    <section class="hero"><h1>Notes</h1><p class="date">${fmtLong(new Date())}</p></section>
     <form class="search" id="home-search" role="search">
       <input type="search" name="q" placeholder="Busca notas, tareas o documentos" aria-label="Buscar">
       <button aria-label="Buscar">${icon('search')}</button>
