@@ -373,7 +373,7 @@ const sorted = (list) => [...list].sort((a, b) => b.updatedAt - a.updatedAt);
 function renderHome() {
   const recent = sorted(items).slice(0, 4);
   app.innerHTML = `
-    <header class="top"><div class="avatar" aria-hidden="true">D</div></header>
+    <header class="top"><div class="avatar" aria-hidden="true">N</div></header>
     <section class="hero"><h1>Notes</h1><p class="date">${fmtLong(new Date())}</p></section>
     <form class="search" id="home-search" role="search">
       <input type="search" name="q" placeholder="Busca notas, tareas o documentos" aria-label="Buscar">
@@ -491,7 +491,7 @@ function renderMore() {
     </div>
 
     <div class="section-head"><h2>Acerca de</h2></div>
-    <p class="prose">Diario es un proyecto independiente de notas personales. No está afiliado, patrocinado ni respaldado por Evernote Corporation ni por ninguna otra empresa. El reconocimiento de texto usa Tesseract.js (licencia Apache 2.0) y funciona en tu propio dispositivo.</p>
+    <p class="prose">Notes es un proyecto independiente de notas personales. No está afiliado, patrocinado ni respaldado por Evernote Corporation ni por ninguna otra empresa. El reconocimiento de texto usa Tesseract.js (licencia Apache 2.0) y funciona en tu propio dispositivo.</p>
   `;
   updateSyncStatus();
   $('#import').addEventListener('change', (e) => e.target.files[0] && importData(e.target.files[0]));
@@ -684,7 +684,7 @@ async function exportData() {
     blobs, scratch: store.get('diario.scratch'),
   };
   const url = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
-  const a = Object.assign(document.createElement('a'), { href: url, download: `diario-${new Date().toISOString().slice(0, 10)}.json` });
+  const a = Object.assign(document.createElement('a'), { href: url, download: `notes-${new Date().toISOString().slice(0, 10)}.json` });
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
@@ -702,7 +702,7 @@ async function importData(file) {
     scheduleSync(500);
     location.hash = '#/notas';
   } catch {
-    toast('El archivo no es una copia válida de Diario');
+    toast('El archivo no es una copia válida de Notes');
   }
 }
 

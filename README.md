@@ -1,4 +1,4 @@
-# Diario
+# Notes
 
 App de notas personal, instalable en el móvil (PWA) y que funciona sin conexión.
 
@@ -17,7 +17,7 @@ Si conectas Google, se sincroniza solo unos segundos después de cada cambio.
 
 ## Conectar con Google Sheets y Drive
 
-1. Crea una hoja de cálculo nueva en Google Sheets (por ejemplo "Diario").
+1. Crea una hoja de cálculo nueva en Google Sheets (por ejemplo "Notes").
 2. Las fotos y grabaciones se guardan en la carpeta de Drive cuyo ID está en `FOLDER_ID`,
    al principio de `Codigo.gs`. Si algún día quieres usar otra carpeta, cambia ese ID:
    es lo que va después de `/folders/` en la URL de la carpeta.
@@ -66,6 +66,6 @@ también necesitan HTTPS.
 
 ## Nota legal
 
-Diario es un proyecto independiente, inspirado en el concepto general de las apps
+Notes es un proyecto independiente, inspirado en el concepto general de las apps
 de notas. Su código, nombre, iconos y diseño visual son propios. No usa marcas,
 logotipos, código ni recursos de Evernote, y no está afiliado a Evernote Corporation.

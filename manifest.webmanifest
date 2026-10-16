@@ -1,6 +1,6 @@
 {
-  "name": "Diario",
-  "short_name": "Diario",
+  "name": "Notes",
+  "short_name": "Notes",
   "description": "Notas, tareas, eventos, grabaciones y fotos, todo en tu dispositivo.",
   "start_url": "./#/crear",
   "display": "standalone",
