@@ -259,3 +259,13 @@ dialog input {
 
 .prose { color: var(--muted); font-size: 14px; }
 .stack { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+
+/* ---------- Sincronización y OCR ---------- */
+.nb-row { color: inherit; text-decoration: none; }
+.btn.small { padding: 8px 12px; font-size: 14px; }
+.btn .ic { width: 20px; height: 20px; }
+.prose .ic { width: 16px; height: 16px; vertical-align: -3px; }
+.ed-tools, .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.settings .field input { width: 100%; }
+#ocr-status:empty { display: none; }
+#ocr-status { color: var(--accent); font-size: 14px; }
