@@ -18,13 +18,14 @@ Si conectas Google, se sincroniza solo unos segundos después de cada cambio.
 ## Conectar con Google Sheets y Drive
 
 1. Crea una hoja de cálculo nueva en Google Sheets (por ejemplo "Diario").
-2. Crea una carpeta en Drive para las fotos y grabaciones y copia su ID: es lo que va
-   después de `/folders/` en la URL de la carpeta.
+2. Las fotos y grabaciones se guardan en la carpeta de Drive cuyo ID está en `FOLDER_ID`,
+   al principio de `Codigo.gs`. Si algún día quieres usar otra carpeta, cambia ese ID:
+   es lo que va después de `/folders/` en la URL de la carpeta.
 3. En la hoja: **Extensiones > Apps Script**. Borra lo que haya y pega el contenido de
    [`Codigo.gs`](Codigo.gs).
-4. Arriba del archivo cambia:
-   - `TOKEN`: una clave larga inventada (protege tu hoja; no la compartas).
-   - `FOLDER_ID`: el ID de la carpeta del paso 2.
+4. Guarda la clave en el script: **Configuración del proyecto (⚙) > Propiedades del
+   script > Añadir propiedad**, con nombre `TOKEN` y como valor una clave larga
+   inventada. No la escribas en el código ni la subas a GitHub: el repositorio es público.
 5. Elige la función `configurar` y pulsa **Ejecutar**. Acepta los permisos.
    Se crean las pestañas *Notas* y *Libretas*.
 6. **Implementar > Nueva implementación > Aplicación web**:
@@ -34,7 +35,8 @@ Si conectas Google, se sincroniza solo unos segundos después de cada cambio.
 8. En la app: **Más > Google Sheets y Drive**, pega la URL y la clave, y pulsa
    *Guardar y sincronizar*. Hazlo en cada móvil u ordenador que uses.
 
-Si cambias `Codigo.gs` más adelante, usa **Implementar > Gestionar implementaciones >
+Si cambias `Codigo.gs` más adelante, pega la versión nueva (la clave sigue guardada en
+las propiedades del script) y usa **Implementar > Gestionar implementaciones >
 Editar > Nueva versión** para que la URL siga siendo la misma.
 
 ### Cómo funciona

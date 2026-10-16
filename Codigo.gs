@@ -7,10 +7,12 @@
  * Pasos completos en el README.
  */
 
-// Inventa una clave larga y ponla también en la app (Más > Google Sheets y Drive).
-const TOKEN = 'CAMBIA-ESTA-CLAVE';
-// ID de la carpeta de Drive: lo que va después de /folders/ en su URL.
-const FOLDER_ID = 'PEGA-AQUI-EL-ID-DE-LA-CARPETA';
+// La clave NO va aquí: está en Configuración del proyecto > Propiedades del script,
+// con el nombre TOKEN. Así puedes pegar versiones nuevas de este archivo sin tocarla.
+// Pon la misma clave en la app (Más > Google Sheets y Drive).
+const TOKEN_PROPERTY = 'TOKEN';
+// Carpeta de Drive donde se guardan las fotos y grabaciones.
+const FOLDER_ID = '1MSY4B9YGGNCExrQkpKkp7rWHCIaRtD_y';
 
 const MAX_CELL = 49000; // Sheets admite 50.000 caracteres por celda
 
@@ -61,7 +63,9 @@ function doGet() {
 function doPost(e) {
   try {
     const req = JSON.parse(e.postData.contents);
-    if (req.token !== TOKEN) return json_({ ok: false, error: 'Clave incorrecta' });
+    const token = getToken_();
+    if (!token) return json_({ ok: false, error: 'Falta la propiedad TOKEN en las propiedades del script' });
+    if (req.token !== token) return json_({ ok: false, error: 'Clave incorrecta' });
     switch (req.action) {
       case 'ping':
         return json_({ ok: true });
@@ -81,6 +85,9 @@ function doPost(e) {
 
 /** Ejecútala una vez desde el editor para dar permisos y crear las pestañas. */
 function configurar() {
+  if (!getToken_()) {
+    throw new Error('Añade la propiedad TOKEN en Configuración del proyecto > Propiedades del script');
+  }
   table_('notebooks');
   table_('items');
   const folder = DriveApp.getFolderById(FOLDER_ID);
@@ -268,6 +275,10 @@ function inFolder_(file) {
 }
 
 // ---------- Utilidades ----------
+function getToken_() {
+  return (PropertiesService.getScriptProperties().getProperty(TOKEN_PROPERTY) || '').trim();
+}
+
 function withLock_(fn) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
