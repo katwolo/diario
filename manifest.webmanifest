@@ -1,0 +1,11 @@
+{
+  "name": "Diario",
+  "short_name": "Diario",
+  "description": "Notas, tareas, eventos, grabaciones y fotos, todo en tu dispositivo.",
+  "start_url": "./#/crear",
+  "display": "standalone",
+  "background_color": "#121214",
+  "theme_color": "#121214",
+  "lang": "es",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
