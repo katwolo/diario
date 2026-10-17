@@ -1,6 +1,7 @@
 import { db } from './db.js';
 import { api, getConfig, setConfig, isConfigured, getTombstones, addTombstone, clearTombstones, resetTombstones } from './sync.js';
 import { recognize } from './ocr.js';
+import { openCamera, closeCamera, cameraSupported } from './camera.js';
 
 const $ = (sel, el = document) => el.querySelector(sel);
 const app = $('#app');
@@ -72,6 +73,7 @@ let rec = null;
 let objectUrls = [];
 const pending = new Map();
 let saveTimer = null;
+let autoCamera = null; // id de la foto nueva que abre la cámara al entrar
 
 async function ensureNotebook() {
   if (notebooks.length) return;
@@ -130,6 +132,7 @@ async function newItem(type, extra = {}) {
   };
   items.push(it);
   await db.put('items', it);
+  if (type === 'photo') autoCamera = it.id;
   cameFromApp = true;
   location.hash = `#/editar/${it.id}`;
 }
@@ -168,20 +171,90 @@ const blobToDataUrl = (blob) =>
     r.readAsDataURL(blob);
   });
 
-// Reduce fotos grandes del móvil: suben antes a Drive y el OCR va más rápido.
-async function shrinkImage(file, max = 2000, quality = 0.85) {
+// Lee ancho, alto y orientación EXIF de un JPEG o PNG sin decodificar la imagen.
+async function imageInfo(file) {
+  const b = new Uint8Array(await file.slice(0, 256 * 1024).arrayBuffer());
+  const dv = new DataView(b.buffer);
+  if (b[0] === 0x89 && b[1] === 0x50) return { w: dv.getUint32(16), h: dv.getUint32(20), orientation: 1 };
+  if (b[0] !== 0xff || b[1] !== 0xd8) return null;
+  let orientation = 1;
+  for (let i = 2; i + 9 < b.length; ) {
+    if (b[i] !== 0xff) return null;
+    const m = b[i + 1];
+    const len = dv.getUint16(i + 2);
+    if (m === 0xe1 && dv.getUint32(i + 4) === 0x45786966) orientation = exifOrientation(dv, i + 10) || 1;
+    if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) {
+      return { h: dv.getUint16(i + 5), w: dv.getUint16(i + 7), orientation };
+    }
+    i += 2 + len;
+  }
+  return null;
+}
+
+function exifOrientation(dv, tiff) {
   try {
-    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
-    const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
-    if (scale === 1 && file.size < 1.5e6) return file;
+    const le = dv.getUint16(tiff) === 0x4949;
+    const ifd = tiff + dv.getUint32(tiff + 4, le);
+    for (let k = 0, n = dv.getUint16(ifd, le); k < n; k++) {
+      const entry = ifd + 2 + k * 12;
+      if (dv.getUint16(entry, le) === 0x0112) return dv.getUint16(entry + 8, le);
+    }
+  } catch { /* EXIF incompleto */ }
+  return 0;
+}
+
+// Reduce fotos grandes del móvil: menos memoria, suben antes a Drive y el OCR va más rápido.
+async function shrinkImage(file, max = 2000, quality = 0.85) {
+  const info = await imageInfo(file).catch(() => null);
+  if (info ? Math.max(info.w, info.h) <= max : file.size < 1.5e6) return file;
+  // Se decodifica ya reducida: abrir una foto de 50 MP a tamaño completo puede agotar la memoria.
+  // Solo se fija el ancho (el alto sale proporcional). Si la foto va girada por EXIF se usa
+  // el lado corto, para que nunca pase de "max" sea cual sea el orden en que se gire y escale.
+  let resizeWidth = Math.round(max * 0.75);
+  if (info) {
+    const scale = max / Math.max(info.w, info.h);
+    resizeWidth = Math.round((info.orientation >= 5 ? Math.min(info.w, info.h) : info.w) * scale);
+  }
+  let bmp;
+  try {
+    bmp = await createImageBitmap(file, { imageOrientation: 'from-image', resizeWidth, resizeQuality: 'high' });
     const canvas = document.createElement('canvas');
-    canvas.width = Math.round(bmp.width * scale);
-    canvas.height = Math.round(bmp.height * scale);
-    canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    canvas.width = bmp.width;
+    canvas.height = bmp.height;
+    canvas.getContext('2d').drawImage(bmp, 0, 0);
     return await new Promise((resolve) => canvas.toBlob((b) => resolve(b || file), 'image/jpeg', quality));
   } catch {
     return file;
+  } finally {
+    bmp?.close();
   }
+}
+
+// Abre la cámara dentro de la app; si no se puede, usa el selector del sistema.
+async function capturePhoto(title, fallbackInput) {
+  if (cameraSupported()) {
+    try {
+      return await openCamera({ title });
+    } catch (err) {
+      if (err && err.name === 'NotAllowedError') {
+        toast('Permite el acceso a la cámara para hacer fotos');
+        return null;
+      }
+    }
+  }
+  $(fallbackInput)?.click();
+  return null;
+}
+
+async function savePhoto(it, file) {
+  await db.put('blobs', await shrinkImage(file), it.id);
+  it.hasMedia = true;
+  it.driveId = '';
+  it.driveUrl = '';
+  if (!it.title) it.title = `Foto ${fmtDateTime(Date.now())}`;
+  touch(it);
+  await flush();
+  if (editingId === it.id) renderEditor(it.id);
 }
 
 // ---------- Sincronización con Google Sheets y Drive ----------
@@ -531,8 +604,9 @@ function renderEditor(id) {
   }
   const ocrTools = it.type === 'note'
     ? `<div class="ed-tools">
-         <label class="btn small file-btn">${icon('scan')} Escanear texto<input type="file" data-ocr accept="image/*" capture="environment"></label>
+         <button type="button" class="btn small" data-action="scan-text">${icon('scan')} Escanear texto</button>
          <label class="btn small file-btn">${icon('image')} Desde galería<input type="file" data-ocr accept="image/*"></label>
+         <input type="file" data-ocr id="scan-fallback" accept="image/*" capture="environment" hidden>
        </div>`
     : '';
   app.innerHTML = `
@@ -612,23 +686,22 @@ async function renderMedia(it) {
   }
   box.insertAdjacentHTML('beforeend', `
     <div class="btn-row">
-      <label class="btn file-btn">${icon('camera')} ${it.hasMedia ? 'Cambiar foto' : 'Hacer o elegir foto'}
-        <input type="file" id="photo-input" accept="image/*" capture="environment">
-      </label>
+      <button type="button" class="btn" data-action="take-photo">${icon('camera')} ${it.hasMedia ? 'Repetir foto' : 'Hacer foto'}</button>
+      <label class="btn file-btn">${icon('image')} Galería<input type="file" data-photo accept="image/*"></label>
+      <input type="file" data-photo id="photo-fallback" accept="image/*" capture="environment" hidden>
       ${it.hasMedia ? `<button type="button" class="btn" data-action="ocr-photo">${icon('scan')} Extraer texto</button>` : ''}
     </div>`);
-  $('#photo-input').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    await db.put('blobs', await shrinkImage(file), it.id);
-    it.hasMedia = true;
-    it.driveId = '';
-    it.driveUrl = '';
-    if (!it.title) it.title = `Foto ${fmtDateTime(Date.now())}`;
-    touch(it);
-    await flush();
-    renderEditor(it.id);
-  });
+  box.querySelectorAll('[data-photo]').forEach((input) =>
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      input.value = '';
+      if (file) savePhoto(it, file);
+    })
+  );
+  if (autoCamera === it.id) {
+    autoCamera = null;
+    runAction('take-photo');
+  }
 }
 
 // ---------- Grabadora ----------
@@ -752,6 +825,18 @@ async function runAction(action, id) {
     case 'rec-stop':
       if (rec) rec.mr.stop();
       break;
+    case 'take-photo': {
+      if (!it) return;
+      const blob = await capturePhoto(it.hasMedia ? 'Repetir foto' : 'Hacer foto', '#photo-fallback');
+      if (blob) await savePhoto(it, blob);
+      break;
+    }
+    case 'scan-text': {
+      if (!it) return;
+      const blob = await capturePhoto('Escanear texto', '#scan-fallback');
+      if (blob) runOcr(it, blob);
+      break;
+    }
     case 'ocr-photo': {
       const blob = it && (await db.get('blobs', it.id));
       if (blob) runOcr(it, blob);
@@ -821,6 +906,7 @@ async function runAction(action, id) {
 async function route(opts) {
   const keepScroll = opts && opts.keepScroll;
   const [, view = 'crear', arg] = location.hash.split('/');
+  closeCamera();
 
   if (editingId && !(view === 'editar' && arg === editingId)) {
     const prev = items.find((i) => i.id === editingId);

@@ -1,6 +1,6 @@
 // Red primero, caché como respaldo: la app funciona sin conexión.
-const CACHE = 'notes-v4';
-const ASSETS = ['./', 'index.html', 'styles.css', 'app.js', 'db.js', 'sync.js', 'ocr.js', 'manifest.webmanifest', 'icon.svg'];
+const CACHE = 'notes-v5';
+const ASSETS = ['./', 'index.html', 'styles.css', 'app.js', 'db.js', 'sync.js', 'ocr.js', 'camera.js', 'manifest.webmanifest', 'icon.svg'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
